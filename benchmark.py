@@ -14,6 +14,7 @@ parser.add_argument('--batch-size', type=int, default=32, help='Size of input')
 parser.add_argument('--seconds', type=int, default=15,
                     help='The size of the fake input in seconds using default stride of 0.01, '
                          '15s is usually the maximum duration')
+parser.add_argument('--num-samples', type=int, default=1024, help='Number of samples to replicate')
 parser.add_argument('--dry-runs', type=int, default=2, help='Dry runs before measuring performance')
 parser.add_argument('--runs', type=int, default=5, help='How many benchmark runs to measure performance')
 parser.add_argument('--labels-path', default='labels.json', help='Path to the labels to infer over in the model')

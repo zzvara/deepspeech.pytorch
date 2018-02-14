@@ -39,13 +39,13 @@ args = parser.parse_args()
 if __name__ == '__main__':
     torch.set_grad_enabled(False)
     model = DeepSpeech.load_model(args.model_path)
+    is_half = DeepSpeech.is_half(model)
     if args.cuda:
         model.cuda()
     model.eval()
 
     labels = DeepSpeech.get_labels(model)
     audio_conf = DeepSpeech.get_audio_conf(model)
-
     if args.decoder == "beam":
         from decoder import BeamCTCDecoder
 
@@ -76,6 +76,8 @@ if __name__ == '__main__':
 
         if args.cuda:
             inputs = inputs.cuda()
+        if is_half:
+            inputs = inputs.half()
 
         out, output_sizes = model(inputs, input_sizes)
 

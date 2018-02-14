@@ -3,6 +3,8 @@ from __future__ import print_function
 import fnmatch
 import io
 import os
+
+import torch
 from tqdm import tqdm
 import subprocess
 import torch.distributed as dist
@@ -42,3 +44,26 @@ def reduce_tensor(tensor, world_size):
     rt /= world_size
     return rt
 
+
+def BN_convert_float(module):
+    """
+    BatchNorm layers to have parameters in single precision.
+    Find all layers and convert them back to float. This can't
+    be done with built in .apply as that function will apply
+    fn to all modules, parameters, and buffers. Thus we wouldn't
+    be able to guard the float conversion based on the module type.
+    """
+    if isinstance(module, torch.nn.modules.batchnorm._BatchNorm):
+        module.float()
+    for child in module.children():
+        BN_convert_float(child)
+    return module
+
+
+def network_to_half(network):
+    return BN_convert_float(network.half())
+
+
+def set_grad(param_copy, param, scale_factor=1):
+    for p_optim, p_model in zip(param_copy, param):
+        p_optim.grad = p_model.grad.float() / (1 / scale_factor)
