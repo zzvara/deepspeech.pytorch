@@ -246,7 +246,6 @@ if __name__ == '__main__':
             sizes = Variable(input_percentages.mul_(int(seq_length)).int(), requires_grad=False)
 
             loss = criterion(out, targets, sizes, target_sizes)
-            loss = loss / inputs.size(0)  # average the loss by minibatch
 
             loss_sum = loss.data.sum()
             inf = float("inf")
