@@ -56,6 +56,7 @@ criterion = CTCLoss()
 
 seconds = int(args.seconds)
 batch_size = int(args.batch_size)
+scale_factor = 1  # Fake a scale
 
 
 def iteration(input_data):
@@ -77,8 +78,11 @@ def iteration(input_data):
     loss = loss / inputs.size(0)  # average the loss by minibatch
     # compute gradient
     model.zero_grad()
+    # SGD step
+    loss *= scale_factor
     loss.backward()
-    set_grad(param_copy, list(model.parameters()))
+    set_grad(param_copy, list(model.parameters()), scale_factor)
+    torch.nn.utils.clip_grad_norm_(param_copy, args.max_norm)
     optimizer.step()
     params = list(model.parameters())
     for x in range(len(params)):
@@ -109,4 +113,3 @@ def run_benchmark():
 run_time = run_benchmark()
 
 print("\n Average run time: %.2fs" % run_time)
-
