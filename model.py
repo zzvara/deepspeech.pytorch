@@ -109,11 +109,11 @@ class Lookahead(nn.Conv1d):
         # output shape - TxNxH
         super(Lookahead, self).__init__(channels, channels, context, groups=channels, bias=False)
         self.channels = channels
-        self.tau = context
+        self.context = context
 
     def forward(self, x):
         x = x.permute(1, 2, 0).contiguous()
-        x = torch.nn.functional.pad(x, (0, self.tau - 1), 'constant', 0)
+        x = torch.nn.functional.pad(x, (0, self.context - 1), 'constant', 0)
         x = super(Lookahead, self).forward(x)
         x = x.permute(2, 0, 1).contiguous()
         return x
