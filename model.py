@@ -102,38 +102,19 @@ class BatchRNN(nn.Module):
         return x
 
 
-class Lookahead(nn.Module):
-    # Wang et al 2016 - Lookahead Convolution Layer for Unidirectional Recurrent Neural Networks
-    # input shape - sequence, batch, feature - TxNxH
-    # output shape - same as input
-    def __init__(self, n_features, context):
-        # should we handle batch_first=True?
-        super(Lookahead, self).__init__()
-        self.n_features = n_features
-        self.weight = Parameter(torch.Tensor(n_features, context + 1))
-        assert context > 0
-        self.context = context
-        self.register_parameter('bias', None)
-        self.init_parameters()
+class Lookahead(nn.Conv1d):
+    def __init__(self, channels, context):
+        # Wang et al 2016 - Lookahead Convolution Layer for Unidirectional Recurrent Neural Networks
+        # input shape -  TxNxH
+        # output shape - TxNxH
+        super(Lookahead, self).__init__(channels, channels, context, groups=channels, bias=False)
+        self.tau = context
 
-    def init_parameters(self):  # what's a better way initialiase this layer?
-        stdv = 1. / math.sqrt(self.weight.size(1))
-        self.weight.data.uniform_(-stdv, stdv)
-
-    def forward(self, input):
-        seq_len = input.size(0)
-        # pad the 0th dimension (T/sequence) with zeroes whose number = context
-        # Once pytorch's padding functions have settled, should move to those.
-        padding = torch.zeros(self.context, *(input.size()[1:])).type_as(input.data)
-        x = torch.cat((input, Variable(padding)), 0)
-
-        # add lookahead windows (with context+1 width) as a fourth dimension
-        # for each seq-batch-feature combination
-        x = [x[i:i + self.context + 1] for i in range(seq_len)]  # TxLxNxH - sequence, context, batch, feature
-        x = torch.stack(x)
-        x = x.permute(0, 2, 3, 1)  # TxNxHxL - sequence, batch, feature, context
-
-        x = torch.mul(x, self.weight).sum(dim=3)
+    def forward(self, x):
+        x = x.permute(1, 2, 0).contiguous()
+        x = torch.nn.functional.pad(x, (0, self.tau - 1), 'constant', 0)
+        x = super(Lookahead, self).forward(x)
+        x = x.permute(2, 0, 1).contiguous()
         return x
 
     def __repr__(self):
