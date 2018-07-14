@@ -108,6 +108,7 @@ class Lookahead(nn.Conv1d):
         # input shape -  TxNxH
         # output shape - TxNxH
         super(Lookahead, self).__init__(channels, channels, context, groups=channels, bias=False)
+        self.channels = channels
         self.tau = context
 
     def forward(self, x):
@@ -119,7 +120,7 @@ class Lookahead(nn.Conv1d):
 
     def __repr__(self):
         return self.__class__.__name__ + '(' \
-               + 'n_features=' + str(self.n_features) \
+               + 'channels=' + str(self.channels) \
                + ', context=' + str(self.context) + ')'
 
 
